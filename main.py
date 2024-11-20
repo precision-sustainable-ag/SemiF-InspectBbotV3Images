@@ -1,6 +1,5 @@
 import sys
 from pathlib import Path
-import getpass
 import logging
 
 # Add the src directory to the PYTHONPATH
@@ -8,7 +7,7 @@ sys.path.append(str(Path(__file__).resolve().parent / "src"))
 
 import hydra
 from omegaconf import DictConfig
-from omegaconf import MISSING, OmegaConf  # Do not confuse with dataclass.MISSING
+from omegaconf import OmegaConf  # Do not confuse with dataclass.MISSING
 from hydra.utils import get_method
 import subprocess
 
@@ -22,7 +21,7 @@ def main(cfg: DictConfig) -> None:
     # Update the batches_in_storage.txt file
     repo_root = cfg.paths.root_dir
     subprocess.run(
-        f"ls /mnt/research-projects/s/screberg/longterm_images2/semifield-upload > {repo_root}/data/batches_in_storage.txt",
+        f"ls {cfg.path.primary_storage} > {cfg.path.batches_in_storage}",
         shell=True,
         check=True
     )
