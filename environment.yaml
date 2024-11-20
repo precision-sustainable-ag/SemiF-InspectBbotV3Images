@@ -1,0 +1,21 @@
+# versinons need updating
+name: semifield-inspectimages
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.9
+  - numpy
+  - pandas
+  - matplotlib
+  - opencv
+  - scikit-learn
+  - tqdm
+  - rawpy
+  - imageio
+  - exifread
+  - pytz
+  - pyyaml
+  - pip
+  - pip:
+      - omegaconf
