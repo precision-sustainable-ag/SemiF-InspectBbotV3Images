@@ -1,0 +1,19 @@
+# Hydra defaults and settings. Ignore these (don't change)
+defaults:
+  - _self_
+  - paths: default
+
+batch: null # Optional specific batch name to highlight.
+image_name: # Optional specific image name to highlight.
+
+ext: JPG
+sample_size: 10
+sample_strategy: random # random, first, last, middle
+plot_times: true # Plot image capture times.
+inspect_images: true # Inspect images for quality.
+plotting_rescale_factor: 0.75 # Rescale factor for plotting images.
+
+pipeline:
+  - inspect_images
+  # - storage_report
+  # - batch_collection_plot

@@ -1,0 +1,7 @@
+root_dir: ${hydra:runtime.cwd}
+
+primary_storage: /mnt/research-projects/s/screberg/longterm_images2/semifield-upload
+
+reports: ${paths.root_dir}/reports
+
+batches_in_storage: ${paths.root_dir}/data/batches_in_storage.txt # Path to the output report file
