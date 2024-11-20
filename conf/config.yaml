@@ -12,8 +12,9 @@ sample_strategy: random # random, first, last, middle
 plot_times: true # Plot image capture times.
 inspect_images: true # Inspect images for quality.
 plotting_rescale_factor: 0.75 # Rescale factor for plotting images.
+filter_by_state: null # Filter by State (e.g. 'NC', 'MD', 'TX')
 
 pipeline:
   - inspect_images
-  # - storage_report
-  # - batch_collection_plot
+  - storage_report
+  - batch_collection_plot

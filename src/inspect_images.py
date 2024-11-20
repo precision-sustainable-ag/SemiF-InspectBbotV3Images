@@ -25,6 +25,7 @@ class ImageBatchProcessor:
         self.sample_strategy = config.sample_strategy
         self.rescale_factor = config.plotting_rescale_factor
         self.batch_file = Path(config.paths.batches_in_storage)
+        self.state_prefix = config.filter_by_state
 
     @staticmethod
     def ensure_directory(path):
@@ -175,10 +176,11 @@ class ImageBatchProcessor:
 
     def process_batches(self):
         """Process batches listed in a file."""
-        state_suffix = "MD"
+
         with open(self.batch_file, "r") as f:
             batches = [line.strip() for line in f if line.strip() and self.is_valid_format(line.strip())]
-            batches = [line for line in batches if line.split("_")[0] == state_suffix]
+            if self.state_prefix:
+                batches = [line for line in batches if line.split("_")[0] == self.state_suffix]
 
 
         for batch_name in batches:

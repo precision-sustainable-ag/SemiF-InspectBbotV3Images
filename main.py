@@ -21,7 +21,7 @@ def main(cfg: DictConfig) -> None:
     # Update the batches_in_storage.txt file
     repo_root = cfg.paths.root_dir
     subprocess.run(
-        f"ls {cfg.path.primary_storage} > {cfg.path.batches_in_storage}",
+        f"ls {cfg.paths.primary_storage} > {cfg.paths.batches_in_storage}",
         shell=True,
         check=True
     )
