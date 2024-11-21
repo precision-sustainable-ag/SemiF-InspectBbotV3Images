@@ -18,7 +18,7 @@ log = logging.getLogger(__name__)
 class ImageBatchProcessor:
     def __init__(self, config: DictConfig):
         self.config = config
-        self.batch_par = Path(config.paths.primary_storage)
+        self.batch_par = Path(config.paths.primary_storage_uploads)
         self.report_dir = Path(config.paths.reports, "batch_inspection")
         self.ext = config.ext
         self.sample_size = config.sample_size

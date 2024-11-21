@@ -87,7 +87,7 @@ def plot_batch_collection(batches, batch_par, output_dir):
 def main(cfg: DictConfig) -> None:
     """Main function to generate batch collection plots."""
     batch_file = cfg.paths.batches_in_storage
-    batch_par = cfg.paths.primary_storage
+    batch_par = cfg.paths.primary_storage_uploads
 
     timestamp = datetime.now().strftime("%Y%m%d")
     output_dir = Path(cfg.paths.reports, timestamp, "plots")

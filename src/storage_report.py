@@ -78,7 +78,7 @@ def process_batches(batch_file, batch_par, report_file):
 
 def main(cfg: DictConfig) -> None:
     batch_file = cfg.paths.batches_in_storage
-    batch_par = cfg.paths.primary_storage
+    batch_par = cfg.paths.primary_storage_uploads
     
     timestamp = datetime.now().strftime("%Y%m%d")
     report_file = Path(cfg.paths.reports, timestamp, "storage_report.txt")

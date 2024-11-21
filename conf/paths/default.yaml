@@ -1,6 +1,8 @@
 root_dir: ${hydra:runtime.cwd}
 
-primary_storage: /mnt/research-projects/s/screberg/longterm_images2/semifield-upload
+primary_storage: /mnt/research-projects/s/screberg/longterm_images2
+
+primary_storage_uploads: ${paths.primary_storage}/semifield-upload
 
 reports: ${paths.root_dir}/reports
 
