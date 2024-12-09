@@ -8,6 +8,7 @@ from tqdm import tqdm
 import logging
 from datetime import datetime, timedelta
 import re
+import hydra
 from utils.utils import (
     get_size, read_jpg, read_raw, convert_epoch_to_edt, get_exif
 )
@@ -23,9 +24,12 @@ class ImageBatchProcessor:
         self.ext = config.ext
         self.sample_size = config.sample_size
         self.sample_strategy = config.sample_strategy
-        self.rescale_factor = config.plotting_rescale_factor
+        self.rescale_factor = config.inspect_images.plotting_rescale_factor
         self.batch_file = Path(config.paths.batches_in_storage)
         self.state_prefix = config.filter_by_state
+        self.batch_id = config.inspect_images.batch_id
+        self.plot_image_capture_times_status = config.inspect_images.plot_image_capture_times_status
+        self.inspect_images_status = config.inspect_images.inspect_images_status
 
     @staticmethod
     def ensure_directory(path):
@@ -182,6 +186,18 @@ class ImageBatchProcessor:
             if self.state_prefix:
                 batches = [line for line in batches if line.split("_")[0] == self.state_suffix]
 
+        if self.batch_id:
+            batch_name = self.batch_id
+            if self.is_batch_inspected(batch_name):
+                print(f"Skipping {batch_name}: Batch has already been inspected.")
+                return
+            else:
+                print(f"Processing batch: {batch_name}")
+                if self.plot_image_capture_times_status:
+                    self.plot_image_capture_times(self.batch_id)
+                if self.inspect_images_status:
+                    self.inspect_images(self.batch_id)
+            return
 
         for batch_name in batches:
             if self.is_batch_inspected(batch_name):
@@ -198,7 +214,11 @@ class ImageBatchProcessor:
         pattern = r'^[A-Z]{2}_\d{4}-\d{2}-\d{2}$'
         return bool(re.match(pattern, s))
 
-
+@hydra.main(version_base="1.3", config_path="../conf", config_name="config")
 def main(cfg: DictConfig) -> None:
     processor = ImageBatchProcessor(cfg)
     processor.process_batches()
+
+
+if __name__ == "__main__":
+    main()

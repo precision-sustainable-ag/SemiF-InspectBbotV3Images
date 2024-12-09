@@ -2,19 +2,47 @@
 defaults:
   - _self_
   - paths: default
+  - color_data: default
 
 batch: null # Optional specific batch name to highlight.
 image_name: # Optional specific image name to highlight.
 
-ext: JPG
+ext: RAW
 sample_size: 10
 sample_strategy: random # random, first, last, middle
-plot_times: true # Plot image capture times.
-inspect_images: true # Inspect images for quality.
-plotting_rescale_factor: 0.75 # Rescale factor for plotting images.
+
+
 filter_by_state: null # Filter by State (e.g. 'NC', 'MD', 'TX')
 
 pipeline:
-  - inspect_images
-  - storage_report
-  - batch_collection_plot
+  - inspect_unpreprocessed
+  # - inspect_preprocessed
+  # - inspect_images
+  # - storage_report
+  # - batch_collection_plot
+
+inspect_images:
+  plotting_rescale_factor: 0.75 # Rescale factor for plotting images.
+  plot_image_capture_times_status: true
+  inspect_images_status: false
+  batch_id: NC_2024-12-06
+
+inspect_unpreprocessed:
+  pipeline:
+    copy_from_lockers: false
+    demosaic: false
+    color_correct: false
+  inspect_preprocessed_status: true
+  batch_id: NC_2024-12-06
+  
+  sample_strategy: random # first, last, random
+  sample_size: 50
+  bit_depth: 16
+  scale_factor: 0.25
+  demosaic_concurrently: true
+  ccm_concurrently: false
+  max_workers: 12
+  im_height: 9528
+  im_width: 13376
+  remove_demosaiced: true
+  remove_local_raws: true

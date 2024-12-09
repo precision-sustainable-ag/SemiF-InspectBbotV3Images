@@ -6,6 +6,7 @@ from omegaconf import DictConfig
 from datetime import datetime
 import matplotlib.dates as mdates
 import numpy as np
+from tqdm import tqdm
 
 def parse_batch_name(batch_name):
     """Extract site and date from the batch name."""
@@ -22,7 +23,7 @@ def read_batches_from_file(batch_file):
     """Read batch names from the input file."""
     batches = []
     with open(batch_file, "r") as f:
-        for line in f:
+        for line in tqdm(f):
             batch_name = line.strip()
             if batch_name:
                 try:
