@@ -9,8 +9,23 @@ from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor, as_compl
 from colour_demosaicing import demosaicing_CFA_Bayer_bilinear
 import random
 import shutil
+import signal
+from signal import SIGINT
 
 log = logging.getLogger(__name__)
+
+def terminate_executor(executor):
+    """Gracefully terminate executor by shutting down and waiting."""
+    executor.shutdown(wait=True, cancel_futures=True)
+    log.info("Executor terminated.")
+
+# Add a signal handler to stop child processes
+def signal_handler(signal_received, frame):
+    log.info("Interrupt signal received. Cleaning up...")
+    raise KeyboardInterrupt
+
+# Register signal handler
+signal.signal(SIGINT, signal_handler)
 
 def apply_transformation_matrix(source_img: np.ndarray, transformation_matrix: np.ndarray) -> np.ndarray:
     """Apply a transformation matrix to the source image to correct its color space."""
@@ -75,11 +90,14 @@ class RawFileHandler:
 
         raw_files = list(self.src_dir.glob(f"*{raw_extension}"))
         raw_files = self.select_raw_files(raw_files)
-        existing_files = {file.stem for file in self.dest_dir.glob(f"*{raw_extension}")}
-        filtered_files = [file for file in raw_files if file.stem not in existing_files]
-
+        
+        existing_files = list(self.dest_dir.glob(f"*{raw_extension}"))
+        existing_file_stems = {file.stem for file in self.dest_dir.glob(f"*{raw_extension}")}
+        filtered_files = [file for file in raw_files if file.stem not in existing_file_stems]
         log.info("Filtered %d files to copy.", len(filtered_files))
-
+        if not filtered_files:
+            log.info(f"No files to copy. {len(existing_files)} files already present at destination.")
+            return existing_files
         with ThreadPoolExecutor(max_workers=max_workers) as executor:
             futures = [
                 executor.submit(self._copy_file, file, self.dest_dir / file.name)
@@ -135,20 +153,21 @@ class DemosaicProcessor:
 
         try:
             nparray = np.fromfile(raw_file, dtype=np.uint16).astype(np.uint16)
-            reshaped = nparray.reshape((self.im_height, self.im_width))
-            normalized = reshaped.astype(np.float32) / 65535.0
 
-            colour_image = demosaicing_CFA_Bayer_bilinear(normalized, pattern="RGGB")
-            colour_image = np.clip(colour_image, 0, 1)
+            org_reshaped = nparray.reshape((self.im_height, self.im_width))
+            image_data = org_reshaped.astype(np.float32) / 65535.0
+
+            rgb_demosaiced = demosaicing_CFA_Bayer_bilinear(image_data, pattern="RGGB")
+            rgb_demosaiced_adjusted = np.clip(rgb_demosaiced, 0, 1)
 
             if self.bit_depth == 8:
-                bgr_image = (colour_image * 255).astype(np.uint8)
+                rgb_colour_image = (rgb_demosaiced_adjusted * 255).astype(np.uint8)
             else:
-                bgr_image = (colour_image * 65535).astype(np.uint16)
+                rgb_colour_image = (rgb_demosaiced_adjusted * 65535).astype(np.uint16)
 
-            bgr_image = cv2.cvtColor(bgr_image, cv2.COLOR_RGB2BGR)
+            bgr_colour_image = cv2.cvtColor(rgb_colour_image, cv2.COLOR_RGB2BGR)
             output_file = output_dir / f"{raw_file.stem}.png"
-            cv2.imwrite(str(output_file), bgr_image, [cv2.IMWRITE_PNG_COMPRESSION, 1])
+            cv2.imwrite(str(output_file), bgr_colour_image, [cv2.IMWRITE_PNG_COMPRESSION, 1])
             log.info(f"Saved image to {output_file} with {self.bit_depth}-bit depth")
         except Exception as e:
             log.error(f"Failed to process image {raw_file}: {e}")
@@ -194,7 +213,7 @@ class ColorCorrectionProcessor:
         log.debug("Reading image: %s", img_path)        
         try:
             img = cv2.imread(str(img_path), cv2.IMREAD_UNCHANGED).astype(np.float32) / 65535.0
-            img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+            # img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
 
             corrected_img = apply_transformation_matrix(img, self.transformation_matrix)
             corrected_img = (corrected_img * 255).astype(np.uint8)
@@ -203,8 +222,9 @@ class ColorCorrectionProcessor:
                 log.info("Downscaling image: %s", img_path)
                 corrected_img = cv2.resize(corrected_img, (0, 0), fx=downscale_factor, fy=downscale_factor)
 
-            output_file = output_dir / f"{img_path.stem}.jpg"
-            cv2.imwrite(str(output_file), cv2.cvtColor(corrected_img, cv2.COLOR_RGB2BGR), [cv2.IMWRITE_JPEG_QUALITY, 100])
+            output_file = output_dir / f"{img_path.stem}.png"
+            # cv2.imwrite(str(output_file), cv2.cvtColor(corrected_img, cv2.COLOR_RGB2BGR), [cv2.IMWRITE_JPEG_QUALITY, 100])
+            cv2.imwrite(str(output_file), cv2.cvtColor(corrected_img, cv2.COLOR_RGB2BGR), [cv2.IMWRITE_PNG_COMPRESSION, 1])
             log.info(f"Saved corrected image to {output_file}")
         except Exception as e:
             log.exception(f"Error in _apply_correction for {img_path}: {e}")
@@ -238,7 +258,7 @@ class PipelineProcessor:
         if self.cfg.inspect_unpreprocessed.pipeline.copy_from_lockers:
             log.info("Starting raw file handling process.")
 
-            handler = RawFileHandler(longterm_raw_dir, temp_raw_dir, sample_strategy=self.sample_strategy, sample_number=self.sample_size)
+            handler = RawFileHandler(longterm_raw_dir, temp_raw_dir, selection_mode=self.sample_strategy, sample_number=self.sample_size)
             local_raw_files = handler.copy_files()
 
         if self.cfg.inspect_unpreprocessed.pipeline.demosaic:
@@ -256,7 +276,7 @@ class PipelineProcessor:
         if self.cfg.inspect_unpreprocessed.pipeline.color_correct:
             log.info("Starting color correction process.")
             
-            ccm_matrix = np.load("transformation_matrix.npz")['matrix']
+            ccm_matrix = np.load(self.cfg.paths.color_matrix)['matrix']
             processor = ColorCorrectionProcessor(transformation_matrix=ccm_matrix)
             if len(local_raw_files) == 0:
                 local_raw_files = list(temp_demosaiced_dir.glob("*.png"))

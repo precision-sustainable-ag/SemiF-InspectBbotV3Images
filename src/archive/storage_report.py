@@ -4,7 +4,7 @@ import logging
 import os
 from datetime import datetime
 from pathlib import Path
-from utils.utils import get_batch_info
+from archive.utils import get_batch_info
 
 log = logging.getLogger(__name__)
 

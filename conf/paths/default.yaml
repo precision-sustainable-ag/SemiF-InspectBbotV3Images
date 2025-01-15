@@ -1,11 +1,6 @@
 root_dir: ${hydra:runtime.cwd}
 
-primary_storage: /mnt/research-projects/s/screberg/longterm_images2
+primary_storage_uploads: /mnt/research-projects/s/screberg/longterm_images2/semifield-upload
 
-primary_storage_uploads: ${paths.primary_storage}/semifield-upload
-
-temp_data: ${paths.root_dir}/data/temp_data
-
-reports: ${paths.root_dir}/reports
-
-batches_in_storage: ${paths.root_dir}/data/semifield_upload_batches_in_storage.txt # Path to the output report file
+local_upload: ${paths.root_dir}/data/semifield-upload
+color_matrix: ${paths.root_dir}/data/semifield-utils/image_development/color_matrix/transformation_matrix.npz

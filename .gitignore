@@ -1,8 +1,7 @@
 # Local folders
-data/
 outputs/
 reports/
-
+run.sh
 **.pdf
 
 # Byte-compiled / optimized / DLL files
