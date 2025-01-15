@@ -1,10 +1,85 @@
 # SemiF-InspectBbotV3Images
 
-### **batch_collection_plot.py**
-This script generates bar plots to visualize the number of JPG and RAW images collected across different batches, categorized by collection sites and dates. It reads batch information from a specified file, calculates image counts for each batch, and organizes the data by site for plotting. The resulting plots highlight temporal trends in image collection, aiding in identifying data gaps or inconsistencies, and are saved in an output directory for reporting purposes.
+This Python script processes batches of RAW images, copying files, demosaicing, and applying color corrections.
 
-### **inspect_images.py**
-This script inspects batches of images to assess their capture timing and quality. It processes images based on sampling strategies (e.g., random, first, last, or middle), resizes them for visualization, and extracts metadata like exposure and ISO. Plots are created to show capture times, highlighting any irregularities in timing or image metadata. The tool is highly configurable, supporting batch-level inspection and detailed reporting on image attributes.
+## Script Workflow
 
-### **storage_report.py**
-This script generates a comprehensive storage report for batches of images. It calculates and logs statistics such as the number of JPG and RAW files, their respective sizes in MiB, and the total folder size in GiB. Additionally, it aggregates storage usage across all batches and reports the total size in TiB. The output is a detailed text report, which serves as an essential tool for monitoring storage utilization and planning resource allocation.
+1. **Setup Paths**:
+   - Defines source, intermediate, and output directories based on the batch ID specified in the configuration.
+
+2. **File Copying**:
+   - Selects RAW files from the source directory using a sampling strategy.
+   - Copies the selected files to a local "raw" directory in parallel.
+
+3. **Load Transformation Matrix**:
+   - Reads a precomputed 9x9 color correction matrix from a `.npz` file.
+
+4. **Image Processing**:
+   - Reads RAW files, performs demosaicing, applies the transformation matrix, and saves the results as JPEG images.
+
+5. **Graceful Termination**:
+   - Handles `SIGINT` (Ctrl+C) and other termination signals to ensure the script stops cleanly, avoiding hanging processes.
+
+## Installation
+
+1. Clone the repository.
+2. Install the required Python dependencies:
+   ```bash
+   pip install -r requirements.txt #TODO change to `environment.yaml` and include instructions for miniconda
+   ```
+
+3. Ensure the `Hydra` configuration files (`config.yaml`) are set up with the appropriate paths and parameters.
+
+
+## Usage
+
+Run the script with Hydra to manage configurations:
+
+```bash
+python main.py mode=inspect_v31_unpreprocessed
+```
+
+### Example YAML Configuration (`config.yaml`):
+```yaml
+paths:
+  root_dir: ${hydra:runtime.cwd}
+  primary_storage_uploads: /mnt/research-projects/s/screberg/longterm_images2/semifield-upload
+  local_upload: ${paths.root_dir}/data/semifield-upload
+  color_matrix: ${paths.root_dir}/data/semifield-utils/image_development/color_matrix/transformation_matrix.npz
+
+inspect_v31:
+  batch_id: NC_2024-01-01
+  sample_size: 10
+  sample_strategy: "random"
+  image_height: 9528
+  image_width: 13376
+  bit_depth: 8
+  concurrent_workers: 8
+```
+
+## Key Configuration Parameters
+
+- **Paths**:
+  - `primary_storage_uploads`: Source directory for RAW files - lts lockers.
+  - `local_upload`: Local directory for processing.
+  - `color_matrix`: Path to the color correction matrix file.
+
+- **Batch Processing**:
+  - `batch_id`: Identifier for the batch to process.
+  - `sample_size`: Number of RAW files to process (optional).
+  - `sample_strategy`: Strategy for selecting files (`random`, `first`, `last`, `middle`).
+
+- **Image Properties**:
+  - `image_height`, `image_width`: Dimensions of the RAW images.
+  - `bit_depth`: Output image bit depth (`8` or `16`).
+
+- **Parallelism**:
+  - `concurrent_workers`: Number of parallel workers for processing.
+
+## Logging and Debugging
+
+The script uses Python's `logging` module for detailed logs:
+- File operations (e.g., skipped or copied files).
+- Image processing status.
+- Errors encountered during execution.
+
