@@ -49,7 +49,7 @@ class FileManager:
 
     @staticmethod
     def get_sampled_files(raw_dir: Path, sample_size: int, strategy: str = "random") -> list:
-        raw_files = list(raw_dir.glob("*.RAW"))
+        raw_files = sorted(list(raw_dir.glob("*.RAW")))
         if sample_size and len(raw_files) > sample_size:
             if strategy == "random":
                 return random.sample(raw_files, sample_size)
@@ -194,7 +194,7 @@ class BatchProcessor:
 
 
     def run(self):
-        # self.copy_files()
+        self.copy_files()
         transformation_matrix = self.load_transformation_matrix()
         self.process_files(transformation_matrix)
 
