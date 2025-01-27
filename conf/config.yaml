@@ -3,15 +3,22 @@ defaults:
   - _self_
   - paths: default
 
-mode: inspect_bbotv31_unpreprocessed
+# mode: inspect_bbotv31_unpreprocessed
+mode: downscale_results
   
-inspect_v31:
-  batch_id: NC_2024-12-06
-  sample_size: 20
-  sample_strategy: middle # random, first, last, middle
+batch_id: NC_2025-01-27  
+
+inspect_v31:  
+  sample_size: 3
+  sample_strategy: random # random, first, last, middle
   bit_depth: 8  # 8 or 16
   concurrent: true  # True or False
   concurrent_workers: 8  # Number of threads for concurrent processing
   scale_factor: 0.15  # Scale factor for resizing images
   image_height: 9528
   image_width: 13376
+
+downscale:
+  factor: 0.15
+  remove_images: false
+  remove_raws: false

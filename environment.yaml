@@ -1,5 +1,5 @@
 # versinons need updating
-name: semifield-inspectimages
+name: inspectsf
 channels:
   - conda-forge
   - defaults
@@ -17,5 +17,7 @@ dependencies:
   - pytz
   - pyyaml
   - pip
+  - colour-demosaicing
+  - reportlab
   - pip:
       - omegaconf
