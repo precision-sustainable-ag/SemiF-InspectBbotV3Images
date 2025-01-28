@@ -24,19 +24,20 @@ TASK_REGISTRY = {
 def main(cfg: DictConfig) -> None:
     size_warning(cfg)
     cfg = OmegaConf.create(cfg)
-    mode = cfg.mode
-    log.info(f"Starting {mode}")
-    
-    if mode not in TASK_REGISTRY:
-        log.error(f"Task {mode} not found in task registry")
-        return
-    
-    try:
-        TASK_REGISTRY[mode](cfg)
-    
-    except Exception as e:
-        log.exception("Failed")
-        return
+    # mode = cfg.mode
+    tasks = cfg.tasks
+    for task in tasks:
+        log.info(f"Starting {task}")
+        if task not in TASK_REGISTRY:
+            log.error(f"Task {task} not found in task registry")
+            return
+        
+        try:
+            TASK_REGISTRY[task](cfg)
+        
+        except Exception as e:
+            log.exception("Failed")
+            return
 
 
 if __name__ == "__main__":

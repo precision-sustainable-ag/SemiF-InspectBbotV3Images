@@ -4,14 +4,13 @@ channels:
   - conda-forge
   - defaults
 dependencies:
-  - python=3.11
+  - python=3.10
   - numpy
   - pandas
   - matplotlib
   - opencv
   - scikit-learn
   - tqdm
-  - rawpy
   - imageio
   - exifread
   - pytz
@@ -21,3 +20,4 @@ dependencies:
   - reportlab
   - pip:
       - omegaconf
+      - rawpy
