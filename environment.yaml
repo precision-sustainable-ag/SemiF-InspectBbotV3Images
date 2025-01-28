@@ -21,3 +21,4 @@ dependencies:
   - pip:
       - omegaconf
       - rawpy
+      - hydra-core==1.3

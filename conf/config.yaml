@@ -12,7 +12,7 @@ tasks:
 batch_id: NC_2025-01-27
 
 inspect_v31:  
-  sample_size: 10
+  sample_size: 3
   sample_strategy: last # random, first, last, middle
   bit_depth: 8  # 8 or 16
   concurrent_workers: 8  # Number of threads for concurrent processing
