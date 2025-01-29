@@ -136,7 +136,7 @@ class BatchProcessor:
 
     def setup_paths(self):
         batch_id = self.cfg.batch_id
-        src_dir = Path(self.cfg.paths.primary_storage_uploads) / batch_id
+        src_dir = Path(self.cfg.paths.primary_storage, "semifield-upload", batch_id)
         raw_dir = Path(self.cfg.paths.local_upload) / batch_id / "raw"
         output_dir = Path(self.cfg.paths.local_upload) / batch_id / "colorcorrected"
 

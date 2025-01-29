@@ -19,7 +19,7 @@ class ImageReport:
         self.csv_output_dir = self.output_report_dir / "data"
         self.csv_output_dir.mkdir(parents=True, exist_ok=True)
 
-        self.upload_directory = Path(cfg.paths.primary_storage_uploads) / self.batch_id
+        self.upload_directory = Path(cfg.paths.primary_storage, "semifield-upload") / self.batch_id
         self.image_files = list(self.upload_directory.glob("*.RAW"))  # Adjust extension if necessary
         self.image_data = []
 
