@@ -35,100 +35,58 @@ After installing Conda, you can set up an environment for this project using an 
     conda env update --file environment.yaml
     ```
 
-### Running the Script
-With the environment set up and activated, you can run the scripts provided in the repository to begin data exploration and analysis:
 
-1. Ensure your Conda environment is activated:
-   ```
-   conda activate field
-   ```
-2. To run a script, use the following command syntax:
+## Scripts:
+
+1. **inspect_bbotv31_unpreprocessed.py**
+
+   This script automates sampling, color demosaicing, downscaling, and file removal for RAW images:
+
+   - **Sampling:** Selects a subset of RAW images from a source directory using different strategies (random, first, last, middle).
+   - **Color Demosaicing:** Converts RAW Bayer-pattern images to RGB using bilinear interpolation and applies a transformation matrix for color correction.
+   - **Downscaling:** Resizes processed images by a specified factor while preserving aspect ratio.
+   - **File Removal:** Deletes original RAW and/or processed images if configured.
+
+   The script leverages parallel processing.
+
+   ### Usage
+
    ```bash
-   sh run_volume_assessment.sh
+   python main.py tasks=[inspect_v31_unpreprocessed] batch_id=NC_2025-01-29
    ```
-3. [NOTE] Setup the pipeline in the main [config](conf/config.yaml#L11). To run a script, use the following command syntax:
+   Note: Replace the batch_id with your desired batch_id
+
+
+2. **report.py**
+   
+   This script generates an **image collection report** by processing metadata and visualizing upload statistics:
+
+   - **Image Sampling & Metadata Extraction:** Extracts filename details, timestamps, and file sizes from RAW images.
+   - **Line Plots:** Generates time-based plots for **capture time**, **upload time**, and **upload delay** using Matplotlib.
+   - **CSV & PDF Reports:** Saves metadata to CSV and creates a summary **PDF report** with key statistics and embedded plots.
+   - **Partial Upload Detection:** Identifies incomplete uploads by comparing file sizes.
+
+   ### Usage
+   
    ```bash
-   python FIELD_REPORT.py
+   python main.py tasks=[report] batch_id=NC_2025-01-29
    ```
+   Note: Replace the batch_id with your desired batch_id
 
-## Script Workflow
+3. **inspect_developed.py**
 
-1. **Setup Paths**:
-   - Defines source, intermediate, and output directories based on the batch ID specified in the configuration.
+   This script provides a **sample of "developed" images** that have already been **preprocessed** and performs the following tasks:
 
-2. **File Copying**:
-   - Selects RAW files from the source directory using a sampling strategy.
-   - Copies the selected files to a local "raw" directory in parallel.
+   - **Sampling:** Selects a subset of **developed images (JPGs)**.
+   - **Copying:** Transfers the sampled images to a specified output directory using parallel processing.
+   - **Downscaling:** Optionally resizes the images by a configured factor while maintaining aspect ratio.
+   - **File Removal:** Deletes original images from the output directory if downscaling is applied.
 
-3. **Load Transformation Matrix**:
-   - Reads a precomputed 9x9 color correction matrix from a `.npz` file.
-
-4. **Image Processing**:
-   - Reads RAW files, performs demosaicing, applies the transformation matrix, and saves the results as JPEG images.
-
-5. **Graceful Termination**:
-   - Handles `SIGINT` (Ctrl+C) and other termination signals to ensure the script stops cleanly, avoiding hanging processes.
-
-## Installation
-
-1. Clone the repository.
-2. Install the required Python dependencies:
+   ### Usage
+   
    ```bash
-   pip install -r requirements.txt #TODO change to `environment.yaml` and include instructions for miniconda
+   python main.py tasks=[inspect_developed] batch_id=NC_2025-01-29
    ```
+   Note: Replace the batch_id with your desired batch_id
 
-3. Ensure the `Hydra` configuration files (`config.yaml`) are set up with the appropriate paths and parameters.
-
-
-## Usage
-
-Run the script with Hydra to manage configurations:
-
-```bash
-python main.py mode=inspect_v31_unpreprocessed
-```
-
-### Example YAML Configuration (`config.yaml`):
-```yaml
-paths:
-  root_dir: ${hydra:runtime.cwd}
-  primary_storage_uploads: /mnt/research-projects/s/screberg/longterm_images2/semifield-upload
-  local_upload: ${paths.root_dir}/data/semifield-upload
-  color_matrix: ${paths.root_dir}/data/semifield-utils/image_development/color_matrix/transformation_matrix.npz
-
-inspect_v31:
-  batch_id: NC_2024-01-01
-  sample_size: 10
-  sample_strategy: "random"
-  image_height: 9528
-  image_width: 13376
-  bit_depth: 8
-  concurrent_workers: 8
-```
-
-## Key Configuration Parameters
-
-- **Paths**:
-  - `primary_storage_uploads`: Source directory for RAW files - lts lockers.
-  - `local_upload`: Local directory for processing.
-  - `color_matrix`: Path to the color correction matrix file.
-
-- **Batch Processing**:
-  - `batch_id`: Identifier for the batch to process.
-  - `sample_size`: Number of RAW files to process (optional).
-  - `sample_strategy`: Strategy for selecting files (`random`, `first`, `last`, `middle`).
-
-- **Image Properties**:
-  - `image_height`, `image_width`: Dimensions of the RAW images.
-  - `bit_depth`: Output image bit depth (`8` or `16`).
-
-- **Parallelism**:
-  - `concurrent_workers`: Number of parallel workers for processing.
-
-## Logging and Debugging
-
-The script uses Python's `logging` module for detailed logs:
-- File operations (e.g., skipped or copied files).
-- Image processing status.
-- Errors encountered during execution.
 
