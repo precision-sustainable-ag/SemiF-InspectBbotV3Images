@@ -38,6 +38,8 @@ After installing Conda, you can set up an environment for this project using an 
 
 ## Scripts:
 
+> **Info:** Run these scripts from the main repo directory.
+
 1. **inspect_bbotv31_unpreprocessed.py**
 
    This script automates sampling, color demosaicing, downscaling, and file removal for RAW images:
@@ -88,5 +90,32 @@ After installing Conda, you can set up an environment for this project using an 
    python main.py tasks=[inspect_developed] batch_id=NC_2025-01-29
    ```
    Note: Replace the batch_id with your desired batch_id
+
+4. **download_rawtherapee.sh**
+
+   This **bash script** automates the **download and setup** of RawTherapee 5.8 for Linux:
+
+   - **Downloads** the RawTherapee 5.8 AppImage from the official source.  
+   - **Grants execution permissions** to the downloaded file, allowing it to run as an application.
+
+   ### Usage
+
+   1. To install RawTherapee, run the installation script:
+   
+      ```bash
+      bash scripts/download_rawtherapee.sh
+      ```
+
+   2. To run RawTherapee:
+
+      In the Mobaxterm terminal, and after changing directories to the repo, run:
+      ```bash
+      ./RawTherapee_5.8.AppImage
+      ```
+   
+   3. To view images in RawTherapee:
+
+      Once RawTherapee opens, move to and select the folder that contain the recently processed images.
+   
 
 
