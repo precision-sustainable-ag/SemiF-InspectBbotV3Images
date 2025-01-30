@@ -1,3 +1,5 @@
+# RawTherapee app
+*.AppImage
 # Local folders
 outputs/
 reports/
