@@ -6,17 +6,17 @@ from omegaconf import DictConfig
 from omegaconf import OmegaConf
 
 from src.inspect_bbotv31_unpreprocessed import main as inspect_bbotv31_unpreprocessed
-from src.downscale_results import main as downscale_results
 from src.utils.size_warning import main as size_warning
 from src.report import main as report
+from src.inspect_developed import main as inspect_developed
 
 log = logging.getLogger(__name__)
 
 # Define a registry of tasks
 TASK_REGISTRY = {
     "inspect_bbotv31_unpreprocessed": inspect_bbotv31_unpreprocessed,
-    "downscale_results": downscale_results,
     "report": report,
+    "inspect_developed": inspect_developed,
     # Add more tasks here as needed
 }
 

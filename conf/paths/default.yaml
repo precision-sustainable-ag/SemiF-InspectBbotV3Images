@@ -1,6 +1,10 @@
 root_dir: ${hydra:runtime.cwd}
 
-primary_storage_uploads: /mnt/research-projects/s/screberg/longterm_images2/semifield-upload
+data_dir: ${paths.root_dir}/data
 
-local_upload: ${paths.root_dir}/data/semifield-upload
-color_matrix: ${paths.root_dir}/data/semifield-utils/image_development/color_matrix/transformation_matrix.npz
+primary_storage: /mnt/research-projects/s/screberg/longterm_images2
+secondary_storage: /mnt/research-projects/s/screberg/longterm_images
+tertiary_storage: /mnt/research-projects/s/screberg/GROW_DATA
+
+local_upload: ${paths.data_dir}/semifield-upload
+color_matrix: ${paths.data_dir}/semifield-utils/image_development/color_matrix/transformation_matrix.npz

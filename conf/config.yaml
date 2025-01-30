@@ -6,8 +6,8 @@ defaults:
 # mode: inspect_bbotv31_unpreprocessed # downscale_results, inspect_bbotv31_unpreprocessed, report
 tasks:
   - inspect_bbotv31_unpreprocessed
-  - downscale_results
   - report
+  # - inspect_developed # Only for bbot developed images
 
 batch_id: NC_2025-01-27
 
@@ -18,8 +18,15 @@ inspect_v31:
   concurrent_workers: 8  # Number of threads for concurrent processing
   image_height: 9528 # Don't change this
   image_width: 13376 # Don't change this
+  random_seed: 42
 
-downscale:
-  factor: 0.25
-  remove_images: true
-  remove_raws: true
+  downscale:
+    factor: 0.25
+    remove_images: true
+    remove_raws: true
+
+inspect_developed:
+  downscale_factor: 0.25
+  remove_jpgs: true # Remove jpgs after downscaling
+  sample_size: 10
+  sample_strategy: random # random, first, last, middle
