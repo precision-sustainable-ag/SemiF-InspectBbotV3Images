@@ -33,6 +33,13 @@ class ImageReport:
         total_images = self.calculate_total_images()
         total_size = self.calculate_total_size()
         return total_size / total_images if total_images > 0 else 0
+    
+    def find_max_image_size(self):
+        return max((image.stat().st_size for image in self.image_files), default=0)
+
+    def count_partial_uploads(self):
+        max_size = self.find_max_image_size()
+        return sum(1 for image in self.image_files if image.stat().st_size < max_size)
 
     def extract_image_metadata(self):
         for image in self.image_files:
@@ -149,6 +156,7 @@ class ImageReport:
         total_size = self.calculate_total_size()
         avg_size = self.calculate_average_size()
         first_upload, last_upload = self.get_first_and_last_upload()
+        partial_uploads = self.count_partial_uploads()
 
         pdf_output_path = str(self.output_report_dir / f"{batch_id}_report.pdf")
         c = canvas.Canvas(pdf_output_path, pagesize=letter)
@@ -163,6 +171,9 @@ class ImageReport:
         if first_upload and last_upload:
             c.drawString(50, 650, f"First Upload: {first_upload}")
             c.drawString(50, 630, f"Last Upload: {last_upload}")
+        
+        if partial_uploads:
+            c.drawString(50, 610, f"Partial Uploads: {partial_uploads}")
 
         # Add the line plot to the PDF
         capture_plot_path = self.plot_file_base / f"capture_time_plot_{batch_id}.png"
