@@ -28,6 +28,7 @@ class FileManager:
 
     @staticmethod
     def copy_file(src: str, dest: str):
+        """Copies a file to the destination if it doesn't already exist or has a different size."""
         if not os.path.exists(dest) or os.path.getsize(src) != os.path.getsize(dest):
             shutil.copy2(src, dest)
             log.info(f"Copied {src} to {dest}")
@@ -36,6 +37,7 @@ class FileManager:
 
     @staticmethod
     def copy_files_in_parallel(src_dir: Path, dest_dir: Path, files: list, max_workers=12):
+        """Copies multiple files in parallel using threading."""
         if not os.path.exists(dest_dir):
             os.makedirs(dest_dir, exist_ok=True)
         log.info(f"Copying {len(files)} files to {dest_dir}")
@@ -49,6 +51,7 @@ class FileManager:
 
     @staticmethod
     def get_sampled_files(raw_dir: Path, sample_size: int, strategy: str = "random") -> list:
+        """Samples a subset of files from a directory based on a given strategy."""
         raw_files = sorted(list(raw_dir.glob("*.RAW")))
         if sample_size and len(raw_files) > sample_size:
             if strategy == "random":
@@ -80,18 +83,21 @@ class ImageProcessor:
             log.error("Source image must be an RGB image.")
             return None
 
+        # Extract color channel coefficients from transformation matrix
         red, green, blue, *_ = np.split(transformation_matrix, 9, axis=1)
 
+        # Normalize the source image to the range [0, 1]
         source_dtype = source_img.dtype
         max_val = np.iinfo(source_dtype).max if source_dtype.kind == 'u' else 1.0
-
         source_flt = source_img.astype(np.float64) / max_val
         source_b, source_g, source_r = cv2.split(source_flt)
-
+        
+        # Compute powers of source image
         source_b2, source_b3 = source_b**2, source_b**3
         source_g2, source_g3 = source_g**2, source_g**3
         source_r2, source_r3 = source_r**2, source_r**3
-
+        
+        # Compute color transformation
         b = (source_r * blue[0] + source_g * blue[1] + source_b * blue[2] +
             source_r2 * blue[3] + source_g2 * blue[4] + source_b2 * blue[5] +
             source_r3 * blue[6] + source_g3 * blue[7] + source_b3 * blue[8])
@@ -128,26 +134,47 @@ class ImageProcessor:
 
 
 class BatchProcessor:
-    """Coordinates the overall batch processing workflow."""
+    """Coordinates the overall batch processing workflow, including file management,
+    image processing, and downscaling."""
 
     def __init__(self, cfg: DictConfig):
+        """Initializes the batch processor with configuration settings.
+        
+        Args:
+            cfg (DictConfig): Configuration object containing paths and processing parameters.
+        """
         self.cfg = cfg
-        self.src_dir, self.raw_dir, self.output_dir = self.setup_paths()
+        self.batch_id = cfg.batch_id
+        self.downscale_factor = cfg.inspect_v31.downscale.factor
+        self.remove_images = cfg.inspect_v31.downscale.remove_images
+        self.remove_raws = cfg.inspect_v31.downscale.remove_raws
+        self.src_dir, self.raw_dir, self.output_dir, self.downscaled_dir = self.setup_paths()
 
     def setup_paths(self):
-        batch_id = self.cfg.batch_id
-        src_dir = Path(self.cfg.paths.primary_storage, "semifield-upload", batch_id)
-        raw_dir = Path(self.cfg.paths.local_upload) / batch_id / "raw"
-        output_dir = Path(self.cfg.paths.local_upload) / batch_id / "colorcorrected"
+        """Sets up and validates required directories for processing.
+        
+        Returns:
+            tuple: Paths to source, raw, output, and downscaled directories.
+        """
+        self.src_dir = Path(self.cfg.paths.primary_storage, "semifield-upload", self.batch_id)
+        self.raw_dir = Path(self.cfg.paths.local_upload) / self.batch_id / "raw"
+        self.output_dir = Path(self.cfg.paths.local_upload) / self.batch_id / "colorcorrected"
+        self.downscaled_dir = Path(self.cfg.paths.local_upload) / self.batch_id / "downscaled"
 
-        raw_dir.mkdir(parents=True, exist_ok=True)
-        output_dir.mkdir(parents=True, exist_ok=True)
+        self.raw_dir.mkdir(parents=True, exist_ok=True)
+        self.output_dir.mkdir(parents=True, exist_ok=True)
+        self.downscaled_dir.mkdir(parents=True, exist_ok=True)
 
-        if not src_dir.exists():
-            raise FileNotFoundError(f"Source directory {src_dir} does not exist.")
-        return src_dir, raw_dir, output_dir
+        if not self.src_dir.exists():
+            raise FileNotFoundError(f"Source directory {self.src_dir} does not exist.")
+        return self.src_dir, self.raw_dir, self.output_dir, self.downscaled_dir
 
     def load_transformation_matrix(self) -> np.ndarray:
+        """Loads the color transformation matrix from file.
+        
+        Returns:
+            np.ndarray: The loaded transformation matrix.
+        """
         color_matrix_path = Path(self.cfg.paths.color_matrix)
         if not color_matrix_path.exists():
             raise FileNotFoundError(f"Color matrix file {color_matrix_path} not found.")
@@ -155,29 +182,33 @@ class BatchProcessor:
             return data["matrix"]
 
     def copy_files(self):
+        """Copies a sample of RAW files from the source directory to the local raw directory."""
         raw_files = FileManager.get_sampled_files(
             self.src_dir, self.cfg.inspect_v31.sample_size, self.cfg.inspect_v31.sample_strategy
         )
         FileManager.copy_files_in_parallel(self.src_dir, self.raw_dir, raw_files)
 
     def process_files(self, transformation_matrix):
+        """Processes RAW image files by applying demosaicing and color correction.
+        
+        Args:
+            transformation_matrix (np.ndarray): Transformation matrix for color correction.
+        """
         all_raw_files = list(self.raw_dir.glob("*.RAW"))
         log.info(f"Found {len(all_raw_files)} RAW files.")
-        # Filter out any files that have a smaller size than the largest file size in the directory
+        
+        # Determine the largest file size to filter out incomplete or corrupted files
         max_file_size = max(f.stat().st_size for f in all_raw_files)
         raw_files = [f for f in all_raw_files if f.stat().st_size == max_file_size]
-        # Filter out any files that have already been processed
+        
+        # Filter out already processed files
         raw_files = [f for f in raw_files if not (self.output_dir / f"{f.stem}.jpg").exists()]
         
         if not raw_files:
             log.info("No new files to process.")
             return
         
-        elif len(raw_files) < len(all_raw_files):
-            log.info(f"Filtered out {len(all_raw_files) - len(raw_files)} already processed files.")
-        
-        else:
-            log.info(f"Processing {len(raw_files)} RAW files.")
+        log.info(f"Processing {len(raw_files)} RAW files.")
         
         with ProcessPoolExecutor(max_workers=self.cfg.inspect_v31.concurrent_workers) as executor:
             futures = [
@@ -192,15 +223,44 @@ class BatchProcessor:
                 except KeyboardInterrupt:
                     log.info("Batch processing interrupted.")
 
-
+    def downscale_images(self):
+        """Downscales processed images if required and removes original files if configured."""
+        input_images = sorted(list(self.output_dir.glob("*.jpg")))
+        
+        for image_path in input_images:
+            image = cv2.imread(str(image_path))
+            height, width = image.shape[:2]
+            new_height = int(height * self.downscale_factor)
+            new_width = int(width * self.downscale_factor)
+            resized_image = cv2.resize(image, (new_width, new_height))
+            output_image_path = self.downscaled_dir / image_path.name
+            cv2.imwrite(str(output_image_path), resized_image)
+            log.info(f"Saved: {output_image_path}")
+            
+            # Remove original processed images if configured
+            if self.remove_images:
+                image_path.unlink()
+                log.info(f"Removed JPG: {image_path}")
+            
+            # Remove original RAW files if configured
+            if self.remove_raws:
+                raw_file = self.raw_dir / f"{image_path.stem}.RAW"
+                if raw_file.exists():
+                    raw_file.unlink()
+                    log.info(f"Removed RAW: {raw_file}")
+    
     def run(self):
+        """Executes the full batch processing workflow."""
         self.copy_files()
         transformation_matrix = self.load_transformation_matrix()
         self.process_files(transformation_matrix)
+        self.downscale_images()
 
 
 @hydra.main(version_base="1.3", config_path="../conf", config_name="config")
 def main(cfg: DictConfig):
+    """Main entry point for batch image processing."""
+    random.seed(cfg.inspect_v31.random_seed)
     setup_signal_handler()
     batch_processor = BatchProcessor(cfg)
     batch_processor.run()
