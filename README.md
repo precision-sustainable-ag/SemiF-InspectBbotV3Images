@@ -51,7 +51,7 @@ After installing Conda, you can set up an environment for this project using an 
 
    The script leverages parallel processing.
 
-   ### Usage
+   **Usage**
 
    ```bash
    python main.py tasks=[inspect_v31_unpreprocessed] batch_id=NC_2025-01-29
@@ -68,7 +68,7 @@ After installing Conda, you can set up an environment for this project using an 
    - **CSV & PDF Reports:** Saves metadata to CSV and creates a summary **PDF report** with key statistics and embedded plots.
    - **Partial Upload Detection:** Identifies incomplete uploads by comparing file sizes.
 
-   ### Usage
+   **Usage**
    
    ```bash
    python main.py tasks=[report] batch_id=NC_2025-01-29
@@ -84,7 +84,7 @@ After installing Conda, you can set up an environment for this project using an 
    - **Downscaling:** Optionally resizes the images by a configured factor while maintaining aspect ratio.
    - **File Removal:** Deletes original images from the output directory if downscaling is applied.
 
-   ### Usage
+   **Usage**
    
    ```bash
    python main.py tasks=[inspect_developed] batch_id=NC_2025-01-29
@@ -98,7 +98,7 @@ After installing Conda, you can set up an environment for this project using an 
    - **Downloads** the RawTherapee 5.8 AppImage from the official source.  
    - **Grants execution permissions** to the downloaded file, allowing it to run as an application.
 
-   ### Usage
+   **Usage**
 
    1. To install RawTherapee, run the installation script:
    
