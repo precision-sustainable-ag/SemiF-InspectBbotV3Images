@@ -71,7 +71,7 @@ After installing Conda, you can set up an environment for this project using an 
    **Usage**
    
    ```bash
-   python main.py tasks=[report] batch_id=NC_2025-01-29
+   python main.py tasks=[report] batch_id=NC_2025-02-03
    ```
    Note: Replace the batch_id with your desired batch_id
 
@@ -108,14 +108,33 @@ After installing Conda, you can set up an environment for this project using an 
 
    2. To run RawTherapee:
 
-      In the Mobaxterm terminal, and after changing directories to the repo, run:
-      ```bash
-      ./RawTherapee_5.8.AppImage
-      ```
+         a. open MobaExterm
+
+         b. start local terminal
+
+         c. script: 
+
+         ```bash 
+         ssh -X -C username@SUNNY.ece.ncsu.edu
+         ```
+         d. enter password
+
+         e. move into SemiF-InspectBbotV3Images 
+
+         ```bash
+         cd SemiF-InspectBbotV3Images
+         ```
+         f. In the Mobaxterm terminal, and after changing directories to the repo, run:
+          ```bash
+         ./RawTherapee_5.8.AppImage
+         ```
    
    3. To view images in RawTherapee:
 
       Once RawTherapee opens, move to and select the folder that contain the recently processed images.
+   4. 
+      From here, you can select the downscaled images and report to inspect for non-target weeds use the report to analyse image upload speed as well as progress
+      
    
 
 
