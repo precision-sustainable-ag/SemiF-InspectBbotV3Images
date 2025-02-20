@@ -6,6 +6,10 @@ import pandas as pd
 from datetime import datetime
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
+import logging
+import random
+
+log = logging.getLogger(__name__)
 
 class ImageReport:
     def __init__(self, cfg: DictConfig):
@@ -22,6 +26,8 @@ class ImageReport:
         self.upload_directory = Path(cfg.paths.primary_storage, "semifield-upload") / self.batch_id
         self.image_files = list(self.upload_directory.glob("*.RAW"))  # Adjust extension if necessary
         self.image_data = []
+
+        self.local_sample_dir = Path(cfg.paths.local_upload) / self.batch_id / "sample_images"
 
     def calculate_total_images(self):
         return len(self.image_files)
@@ -182,11 +188,57 @@ class ImageReport:
         
         # Add the line plot to the PDF
         upload_plot_path = self.plot_file_base / f"upload_time_plot_{batch_id}.png"
-        if Path(upload_plot_path).exists():
+        if upload_plot_path.exists():
             c.drawImage(upload_plot_path, 300, 400, width=500//1.6, height=300//1.5)
 
+        # -----------------------------
+        # Add the "Sample images" section at the bottom
+        # -----------------------------
+        # Set heading for sample images
+        if self.local_sample_dir.exists() and list(self.local_sample_dir.glob("*.jpg")):
+            c.showPage()  # Start a new page
+            c.setFont("Helvetica-Bold", 14)
+            page_width, page_height = letter
+            left_margin = 25
+            right_margin = 25
+            available_width = page_width - left_margin - right_margin
+
+            sample_heading_y = page_height - 25
+            c.drawString(left_margin, sample_heading_y, "Sample images")
+            
+            # Define grid layout for 3 rows x 3 columns
+            spacing_x = 10  # Reduced horizontal spacing
+            # Calculate image width so that 3 images plus 2 gaps exactly fill the available width
+            image_w = (available_width - 2 * spacing_x) / 3
+            image_h = image_w  # Using a square bounding box; the image itself will preserve its aspect ratio
+            spacing_y = 1  # Vertical spacing between rows
+            start_x = left_margin
+            start_y = sample_heading_y - 175  # Starting y position below the heading
+            
+            # Get up to 10 images from the batch folder (upload_directory)
+            sample_images = list(self.local_sample_dir.glob("*.jpg"))
+            random_sample_of_sample_imags = random.sample(sample_images, min(9, len(sample_images)))
+            
+            for i, image_path in enumerate(random_sample_of_sample_imags):
+                row = i // 3  # 5 images per row
+                col = i % 3
+                x = start_x + col * (image_w + spacing_x)
+                y = start_y - row * (image_h + spacing_y)
+                if image_path.exists():
+                    # Draw the image using the provided bounding box while preserving its aspect ratio
+                    c.drawImage(str(image_path),
+                                x, y,
+                                width=image_w,
+                                height=image_h,
+                                preserveAspectRatio=True,
+                                anchor='c')
+        else:
+            log.warning("Sample images not available")
+            c.drawString(50, 350, "Sample images not available")
+
+        # Save the PDF
         c.save()
-        print(f"PDF report saved to {pdf_output_path}")
+        log.info(f"PDF report saved to {pdf_output_path}")
 
     def generate_report(self):
         self.extract_image_metadata()

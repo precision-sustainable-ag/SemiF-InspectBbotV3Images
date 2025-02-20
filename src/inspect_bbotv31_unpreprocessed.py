@@ -187,10 +187,7 @@ class BatchProcessor:
         """
         src_dir = Path(self.cfg.paths.primary_storage, "semifield-upload", self.batch_id)
         local_raw_dir = Path(self.cfg.paths.local_upload) / self.batch_id / "raw"
-        output_dir = Path(self.cfg.paths.local_upload) / self.batch_id / "colorcorrected"
-        
-        if self.downscale_factor != 1.0:
-            output_dir = Path(self.cfg.paths.local_upload) / self.batch_id / "downscaled_colorcorrected"
+        output_dir = Path(self.cfg.paths.local_upload) / self.batch_id / "sample_images"
         
         output_dir.mkdir(parents=True, exist_ok=True)
         local_raw_dir.mkdir(parents=True, exist_ok=True)
